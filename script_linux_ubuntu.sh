@@ -39,7 +39,7 @@ fi
 # Install CloudFoundry BOSH CLI
 if ! command -v bosh &> /dev/null; then
     log "Installing CloudFoundry BOSH CLI..."
-    sudo wget -q -O - https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-6.4.7-linux-amd64 > bosh
+    sudo wget -q -O bosh https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-6.4.7-linux-amd64
     chmod +x bosh
     sudo mv bosh /usr/local/bin
 fi
@@ -50,9 +50,33 @@ if [ ! -d "cf-deployment" ]; then
     git clone https://github.com/cloudfoundry/cf-deployment.git
 fi
 
+# Create vars.yml with necessary variables
+log "Creating vars.yml with necessary variables..."
+cat <<EOF > vars.yml
+system_domain: example.com
+EOF
+
+# Set up BOSH environment alias
+log "Setting up BOSH environment alias..."
+BOSH_ENV_ALIAS="my-bosh-env"
+BOSH_DIRECTOR_IP="your-bosh-director-ip" # Replace with the actual IP or hostname
+bosh alias-env $BOSH_ENV_ALIAS -e $BOSH_DIRECTOR_IP --ca-cert <(bosh int ./path-to-your-creds.yml --path /director_ssl/ca)
+
+# Authenticate with BOSH director
+log "Authenticating with BOSH director..."
+bosh -e $BOSH_ENV_ALIAS log-in <<EOF
+your-username
+your-password
+EOF
+
+# Fetch necessary releases for BOSH deployment
+log "Fetching necessary BOSH releases..."
+bosh -e $BOSH_ENV_ALIAS upload-release https://bosh.io/d/github.com/cloudfoundry/cf-deployment?dir=releases
+bosh -e $BOSH_ENV_ALIAS upload-stemcell https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
+
 # Deploy CloudFoundry
 log "Deploying CloudFoundry..."
 cd cf-deployment
-bosh create-env cf-deployment.yml --state=cf-state.json --vars-store=cf-vars.yml
+bosh -e $BOSH_ENV_ALIAS -d cf deploy cf-deployment.yml -l ../vars.yml
 
 log "CloudFoundry deployment completed successfully."
