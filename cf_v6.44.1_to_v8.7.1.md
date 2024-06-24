@@ -83,7 +83,7 @@ the script adjustments for this changes inother to avoid breaking changes.
 | ```cf buildpacks```                     |                                        | Order of columns changed, buildpack column header renamed                                              |                                                              |
 
 
-## Upgrading from version 6.44.1 To version 8.7.10
+## Upgrading from version 7.7.10 To version 8.7.10
 
 ### New Workflows supported by cloud foundry version 8
 ***Asynchronous operations*** All services-related operations are now asynchronous by default. This includes manipulating service keys and route bindings in cloud foundry version 8. Golang has been updated from ```v1.13``` to ```v1.16```.
